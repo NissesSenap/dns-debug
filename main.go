@@ -7,6 +7,7 @@ import (
 	"net/url"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 
 	"gopkg.in/DataDog/dd-trace-go.v1/ddtrace/tracer"
@@ -25,7 +26,13 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	endpoints := []string{"https://google.com", "https://google.se", "https://gp.se", "https://dn.se", "https://di.se"}
+
+	stringEndpoints := os.Getenv("ENDPOINTS")
+	if stringEndpoints == "" {
+		stringEndpoints = "https://google.com,https://google.se"
+	}
+	endpoints := strings.Split(stringEndpoints, ",")
+
 	fmt.Printf("Endpoints: %v\n", endpoints)
 	fmt.Printf("DNS URL: %v\n", myurl)
 	for _, endpoint := range endpoints {
