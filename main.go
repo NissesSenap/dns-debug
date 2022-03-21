@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"net"
+	"net/url"
 	"os"
 	"time"
 
@@ -10,15 +11,24 @@ import (
 )
 
 func main() {
-	url := os.Getenv("URL")
-	if url == "" {
-		url = "google.com"
+	myurl := os.Getenv("URL")
+	if myurl == "" {
+		myurl = "google.com"
 	}
-	fmt.Println(url)
+	endpoints := []string{"google.com", "google.se"}
+	fmt.Printf("Endpoints: %v\n", endpoints)
+	fmt.Printf("DNS URL: %v\n", myurl)
+	for _, name := range endpoints {
+		_, err := url.Parse(name)
+		if err != nil {
+			panic(err)
+		}
+	}
+
 	tracer.Start()
 	defer tracer.Stop()
 	for {
-		err := lookup(url)
+		err := lookup(myurl)
 		if err != nil {
 			break
 		}
@@ -27,16 +37,19 @@ func main() {
 	os.Exit(1)
 }
 
-func lookup(url string) error {
+func lookup(myurl string) error {
 	span := tracer.StartSpan("dns.request", tracer.ResourceName("dns"))
 	defer span.Finish()
-	ips, err := net.LookupIP(url)
+	start := time.Now()
+	ips, err := net.LookupIP(myurl)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Could not get IPs: %v\n", err)
 		return err
 	}
-	fmt.Printf("This is the IP:s %v", ips)
+	duration := time.Since(start)
+	fmt.Printf("This was the duration: %v\n", duration)
+	fmt.Printf("This is the IP:s %v\n", ips)
 	// Set tag
-	span.SetTag("url", url)
+	span.SetTag("url", myurl)
 	return nil
 }
