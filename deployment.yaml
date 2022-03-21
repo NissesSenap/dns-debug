@@ -1,0 +1,56 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dns-debug
+  labels:
+    tags.datadoghq.com/env: "qa"
+    tags.datadoghq.com/version: "0.0.3"
+    tags.datadoghq.com/service: "dns-debug"
+spec:
+  selector:
+    matchLabels:
+      app: dns-debug
+  template:
+    metadata:
+      labels:
+        app: dns-debug
+        tags.datadoghq.com/env: "qa"
+        tags.datadoghq.com/version: "0.0.3"
+        tags.datadoghq.com/service: "dns-debug"
+    spec:
+      containers:
+        - name: dns-debug
+          image: quay.io/nissessenap2/dns-debug:v0.0.3
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: URL
+              value: "google.com."
+            - name: CURL
+              value: "true"
+            - name: ENDPOINTS
+              value: "https://google.com,https://google.se,https://google.dk"
+            - name: TRACING_PROVIDER
+              value: datadog
+            - name: DD_AGENT_HOST
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.hostIP
+            - name: DD_ENV
+              value: qa
+            - name: DD_SERVICE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.labels['tags.datadoghq.com/service']
+            - name: DD_VERSION
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.labels['tags.datadoghq.com/version']
+            - name: DD_LOGS_INJECTION
+              value: "true"
+          resources:
+            limits:
+              cpu: 250m
+              memory: 128Mi
+            requests:
+              cpu: 100m
+              memory: 32Mi
